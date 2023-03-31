@@ -1,8 +1,29 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-void main() async {
+// String BASE_URL = 'www.aladin.co.kr';
+// String PARAMS = '/ttb/api/ItemList.aspx?ttbkey=ttbentrydia76910913001&QueryType=ItemNewAll&MaxResults=30&start=1&CategoryId=50927&output=js&Version=20131101';
+String URL = 'https://www.aladin.co.kr/ttb/api/ItemList.aspx?ttbkey=ttbentrydia76910913001&QueryType=ItemNewAll&MaxResults=30&start=1&CategoryId=50927&output=js&Version=20131101';
+var Books = [];
 
+Future fetchPost() async {
+  final response = await http.get(Uri.parse(URL));
+
+  if (response.statusCode == 200) {
+    if (kDebugMode) {
+      print(jsonDecode(response.body)['item']);
+    }
+
+    Books = jsonDecode(response.body)['item'];
+
+  } else {
+    throw Exception('Failed to load data.');
+  }
+}
+
+void main() {
   runApp(const MyApp());
 }
 
@@ -17,21 +38,24 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Lite'),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
+  const MyHomePage({ super.key });
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  @override
+  void initState() {
+    super.initState();
+    fetchPost();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +101,7 @@ class _MyHomePageState extends State<MyHomePage> {
             Center (
               child: Column (
                 children: <Widget>[
-                  for (int i = 0; i < 6; i++)
+                  for (int i = 0; i < Books.length; i++)
                     Container (
                       width: 320,
                       height: 250,
@@ -87,9 +111,9 @@ class _MyHomePageState extends State<MyHomePage> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         elevation: 4,
-                        child: const Center (
-                          child: Text('This is Card',
-                            style: TextStyle (
+                        child: Center (
+                          child: Text(Books[i]['title'].toString(),
+                            style: const TextStyle (
                                 fontSize: 30,
                                 fontFamily: 'Lexend,'
                             ),
