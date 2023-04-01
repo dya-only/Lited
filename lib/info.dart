@@ -49,6 +49,7 @@ class InfoPage extends StatelessWidget {
                 ),
                 Container (
                   width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(0, 0, 0, 20),
                   child: Text (info.data[0]['description'],
                     style: const TextStyle (
                       fontFamily: 'Noto',
