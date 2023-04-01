@@ -2,6 +2,9 @@
 
 A new Flutter project for light novels.
 
+![img.png](img.png)
+![img_1.png](img_1.png)
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.
