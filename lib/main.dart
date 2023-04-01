@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-// String BASE_URL = 'www.aladin.co.kr';
-// String PARAMS = '/ttb/api/ItemList.aspx?ttbkey=ttbentrydia76910913001&QueryType=ItemNewAll&MaxResults=30&start=1&CategoryId=50927&output=js&Version=20131101';
-String URL = 'https://www.aladin.co.kr/ttb/api/ItemList.aspx?ttbkey=ttbentrydia76910913001&QueryType=ItemNewAll&MaxResults=30&start=1&CategoryId=50927&output=js&Version=20131101';
-var Books = [];
+import './info.dart';
 
-Future<String> fetchPost() async {
+String URL = 'https://www.aladin.co.kr/ttb/api/ItemList.aspx?ttbkey=ttbentrydia76910913001&QueryType=ItemNewAll&MaxResults=30&start=1&CategoryId=50927&Cover=Big&output=js&Version=20131101';
+String INFO_URL = 'http://www.aladin.co.kr/ttb/api/ItemSearch.aspx?ttbkey=ttbentrydia76910913001&Query=%EC%98%86%EC%A7%91%EC%B2%9C%EC%82%AC%EB%8B%98&QueryType=Title&Cover=Big&MaxResults=5&start=1&SearchTarget=Book&output=js&Version=20131101';
+var Books = [];
+var InfoBooks = [];
+
+Future<String> fetchGet() async {
   final response = await http.get(Uri.parse(URL));
 
   if (response.statusCode == 200) {
@@ -23,14 +25,35 @@ Future<String> fetchPost() async {
   }
 }
 
+Future<String> fetchInfo (String title) async {
+  INFO_URL = 'http://www.aladin.co.kr/ttb/api/ItemSearch.aspx?ttbkey=ttbentrydia76910913001&Query=$title&QueryType=Title&Cover=Big&MaxResults=5&start=1&SearchTarget=Book&output=js&Version=20131101';
+  final response = await http.get(Uri.parse(INFO_URL));
+
+  if (response.statusCode == 200) {
+    if (kDebugMode) print('Searching...');
+    InfoBooks = await jsonDecode(response.body)['item'];
+    if (kDebugMode) {
+      print(InfoBooks);
+    }
+    return 'true';
+  } else {
+    throw Exception('Failed to load data.');
+  }
+}
+
 void main() async {
-  await fetchPost();
+  await fetchGet();
 
   if (kDebugMode) {
     print("Loading End");
   }
 
   runApp(const MyApp());
+}
+
+class InfoData {
+  var data;
+  InfoData({ this.data });
 }
 
 class MyApp extends StatelessWidget {
@@ -108,64 +131,76 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Column (
                 children: <Widget>[
                   for (int i = 0; i < Books.length; i++)
-                    Container (
-                      width: 320,
-                      height: 250,
-                      margin: const EdgeInsets.fromLTRB(0, 0, 0, 40),
-                      child: Card (
-                        shape: RoundedRectangleBorder (
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        elevation: 4,
-                        child: Row (
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            ClipRRect (
-                              borderRadius: BorderRadius.circular(20),
-                              child: Image.network(Books[i]['cover'],
-                                height: 200,
-                                fit: BoxFit.cover,
+                    GestureDetector (
+                      onTap: () async {
+                        await fetchInfo(Books[i]['title']);
+
+                        if (context.mounted) {
+                          Navigator.push (
+                              context,
+                              MaterialPageRoute(builder: (context) => InfoPage( info: InfoData( data: InfoBooks )))
+                          );
+                        }
+                      },
+                      child: Container (
+                        width: 320,
+                        height: 250,
+                        margin: const EdgeInsets.fromLTRB(0, 0, 0, 40),
+                        child: Card (
+                          shape: RoundedRectangleBorder (
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          elevation: 4,
+                          child: Row (
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              ClipRRect (
+                                borderRadius: BorderRadius.circular(20),
+                                child: Image.network(Books[i]['cover'],
+                                  height: 200,
+                                  fit: BoxFit.cover,
+                                ),
                               ),
-                            ),
-                            Column (
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                Container (
-                                  width: 100,
-                                  // height: 63,
-                                  margin: const EdgeInsets.fromLTRB(25, 0, 0, 0),
-                                  child: Center (
-                                    child: Text (Books[i]['title'].toString(),
+                              Column (
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  Container (
+                                    width: 100,
+                                    // height: 63,
+                                    margin: const EdgeInsets.fromLTRB(25, 0, 0, 0),
+                                    child: Center (
+                                      child: Text (Books[i]['title'].toString(),
+                                        style: const TextStyle (
+                                          fontSize: 20,
+                                          fontFamily: 'Noto',
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 3,
+                                      ),
+                                    ),
+                                  ),
+                                  Container (
+                                    width: 100,
+                                    margin: const EdgeInsets.fromLTRB(25, 20, 0, 0),
+                                    child: Text (Books[i]['author'].toString(),
                                       style: const TextStyle (
-                                        fontSize: 20,
+                                        fontSize: 16,
+                                        color: Colors.grey,
                                         fontFamily: 'Noto',
                                         fontWeight: FontWeight.w400,
                                       ),
                                       overflow: TextOverflow.ellipsis,
-                                      maxLines: 3,
+                                      maxLines: 2,
                                     ),
                                   ),
-                                ),
-                                Container (
-                                  width: 100,
-                                  margin: const EdgeInsets.fromLTRB(25, 20, 0, 0),
-                                  child: Text (Books[i]['author'].toString(),
-                                    style: const TextStyle (
-                                      fontSize: 16,
-                                      color: Colors.grey,
-                                      fontFamily: 'Noto',
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 2,
-                                  ),
-                                ),
-                              ],
-                            )
-                          ],
-                        )
-                      ),
-                    )
+                                ],
+                              )
+                            ],
+                          )
+                        ),
+                      )
+                    ),
                 ],
               )
             )
